@@ -1,0 +1,33 @@
+<?php
+$title = 'Categories';
+$this->headTitle($title);
+?>
+<script>
+   $(document).ready(function() {
+       $('#categoryTable').DataTable({
+               "ajax": '/categorylist'
+           });
+
+       });
+
+</script>
+<h1><?php echo $this->escapeHtml($title); ?></h1>
+<p><a href="<?php echo $this->url('addcategory'); ?>">Add new Category</a></p>
+<table id="categoryTable" class="display" width="100%" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Category Name</th>
+                <th>Description</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tfoot>
+            <tr>
+                <th>Category Name</th>
+                <th>Description</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </tfoot>
+    </table>

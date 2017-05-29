@@ -1,0 +1,30 @@
+<?php
+$title = 'Add new Post';
+$this->headTitle($title);
+?>
+<h3><?php echo $this->escapeHtml($title); ?></h3>
+
+<form class="" id="postForm" method="post" action="/addpost" enctype="multipart/form-data">
+    <div class="form-group has-danger">
+        <div class="form-control-feedback" style="color: red"><?= isset($this->errMsg) ? $this->errMsg : '' ?></div>
+    </div>
+    <div class="form-group" style="width: 300px;">
+        <label for="postTitle">Post Title</label>
+        <input class="form-control" id="postTitle" name="postTitle" type="text" required>
+    </div>
+    <div class="form-group" style="width: 300px;">
+        <label for="category">Select Category</label>
+        <select class="custom-select" id="category" name="category">
+            <?php foreach ($this->categoryList as $category) { ?>
+                <option value="<?= $category['id'] ?>"><?= $category['category_name'] ?></option>
+            <?php } ?>
+        </select>
+    </div>
+    <div class="form-group" style="width: 300px;">
+        <label for="description">Summary</label>
+        <textarea class="form-control" id="description" name="summary"></textarea>
+    </div>
+    <div class="form-group" style="width: 300px;">
+        <input class="submit btn btn-primary" type="submit" value="Submit" id="postSubmit" required>
+    </div>
+</form>

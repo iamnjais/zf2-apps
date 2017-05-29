@@ -1,0 +1,31 @@
+<?php
+$title = 'Update Post';
+$this->headTitle($title);
+?>
+<h3><?php echo $this->escapeHtml($title); ?></h3>
+
+<form class="" id="postForm" method="post" action="/updatepost/<?=$this->postData['id']?>" enctype="multipart/form-data">
+    <div class="form-group has-danger">
+        <div class="form-control-feedback" style="color: red"><?= isset($this->errMsg) ? $this->errMsg : '' ?></div>
+    </div>
+    <div class="form-group" style="width: 300px;">
+        <label for="postTitle">Post Title</label>
+        <input class="form-control" id="postTitle" value="<?=$this->postData['post_title']?>" name="postTitle" type="text" required>
+    </div>
+    <div class="form-group" style="width: 300px;">
+        <label for="category">Select Category</label>
+        <select class="custom-select" id="category" name="category">
+            
+            <?php foreach ($this->categoryList as $category) { ?>
+                <option value="<?= $category['id'] ?>" <?=$this->postData['category_id'] == $category['id'] ? 'selected' : ''?>><?= $category['category_name'] ?></option>
+            <?php } ?>
+        </select>
+    </div>
+    <div class="form-group" style="width: 300px;">
+        <label for="summary">Description</label>
+        <textarea class="form-control" id="smmarry" name="summary"><?=$this->postData['summary']?></textarea>
+    </div>
+    <div class="form-group" style="width: 300px;">
+        <input class="submit btn btn-primary" type="submit" value="Submit" id="postSubmit" required>
+    </div>
+</form>
