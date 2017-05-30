@@ -29,6 +29,7 @@ class IndexController extends DemoapplicationAbstractActionController {
             $postModel = $this->getServiceLocator()->get('postModel');
 
             try {
+                $this->validateCategories($post['category']);
                 $products = $postModel->addPost($post);
             } catch (\Exception $ex) {
                 return new ViewModel(array('errMsg' => $ex->getMessage()));
@@ -52,7 +53,7 @@ class IndexController extends DemoapplicationAbstractActionController {
         $allPosts = array('data' => array());
         if (count($availablePosts) > 0) {
             foreach ($availablePosts as $key => $post) {
-                $postId = $post['id'];
+                $postId = $post['pid'];
                 $allPosts['data'][$key] = array($post['post_title'], $post['category_name'], $post['summary'],
                     "<a href='/deletepost?id=$postId'>Delete</a>",
                     "<a href='/updatepost/$postId'>Update</a>");
@@ -66,11 +67,11 @@ class IndexController extends DemoapplicationAbstractActionController {
      * 
      */
     public function deletepostAction() {
-        $categoryId = $_REQUEST['id'];
+        $postId = $_REQUEST['id'];
 
-        $categoryModel = $this->getServiceLocator()->get('categoryModel');
-        $categoryModel->delete($categoryId);
-        $this->redirect()->toRoute('category');
+        $postModel = $this->getServiceLocator()->get('postModel');
+        $postModel->delete($postId);
+        $this->redirect()->toRoute('posts');
     }
 
     /**
@@ -81,25 +82,32 @@ class IndexController extends DemoapplicationAbstractActionController {
         $categoryModel = $this->getServiceLocator()->get('categoryModel');
         $postModel = $this->getServiceLocator()->get('postModel');
         $postId = $this->params()->fromRoute('id', 0);
-
+        $errMsg = '';
+        $categories = $categoryModel->getAllCategories();
+        $postData = $postModel->getPostById($postId);
+        $selectedCategories = explode(',', $postData['category_id']);
         if ($this->request->isPost()) {
             $post = $this->request->getPost();
+            $selectedCategories = empty($post['category']) ? array() : $post['category'];
             try {
+                $this->validateCategories($post['category']);
                 $response = $postModel->update($post, $postId);
                 $this->redirect()->toRoute('posts');
             } catch (\Exception $ex) {
-                return new ViewModel(array('errMsg' => $ex->getMessage()));
-            }
-        } else {
-
-            if ($postId != 0) {
-                $categoryModel = $this->getServiceLocator()->get('categoryModel');
-
-                $categories = $categoryModel->getAllCategories();
-                $postData = $postModel->getPostById($postId);
-                return new ViewModel(array('postData' => $postData, 'categoryList' => $categories));
+                $errMsg = $ex->getMessage();
             }
         }
+        return new ViewModel(array('errMsg' => $errMsg, 'postData' => $postData, 'categoryList' => $categories, 'selectedCategories' => $selectedCategories));
+    }
+    
+    /**
+     * 
+     * @param type $data
+     * @throws \Exception
+     */
+    protected function validateCategories($data){
+        if(empty($data))
+            throw new \Exception('Please select at least one category');
     }
 
 }

@@ -28,7 +28,7 @@ class Posts extends DemoapplicationAbstractModel {
         $data = null;
         $dbAdapter = $this->getDBAdapter();
 
-        $sql = 'SELECT p.post_title,p.summary,p.id,p.category_id,c.category_name FROM posts p inner join categories c on c.id = p.category_id';
+        $sql = 'SELECT p.post_title,p.summary,p.id as pid,group_concat(c.category_name separator ", ") as category_name FROM posts p inner join category_post cp on p.id = cp.post_id inner join categories c on c.id = cp.category_id group by p.id';
 
         $result = $dbAdapter->query($sql)->execute();
         if ($result->count() > 0) {
@@ -47,7 +47,7 @@ class Posts extends DemoapplicationAbstractModel {
         $data = null;
         $dbAdapter = $this->getDBAdapter();
 
-        $sql = 'SELECT * FROM posts where id = ' . $postId;
+        $sql = 'SELECT p.id, p.post_title, p.summary,group_concat(cp.category_id separator ", ") as category_id FROM posts p inner join category_post cp on p.id = cp.post_id where id = ' . $postId;
 
         $result = $dbAdapter->query($sql)->execute();
         if ($result->count() > 0) {
@@ -71,13 +71,36 @@ class Posts extends DemoapplicationAbstractModel {
 
         $newData = array(
             'post_title' => $data['postTitle'],
-            'category_id' => $data['category'],
             'summary' => $data['summary'],
         );
         $insert->values($newData);
         $selectString = $sql->getSqlStringForSqlObject($insert);
         $results = $this->dbAdapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
+        $postId = $results->getGeneratedValue();
+        $this->createRelationship($postId,$data['category']);
         return $results;
+    }
+    
+    /**
+     * 
+     * @param type $postId
+     * @param type $categories
+     */
+    public function createRelationship($postId, $categories){
+        $dbAdapter = $this->getDBAdapter();
+        $sql = new Sql($dbAdapter);
+
+        $insert = $sql->insert('category_post');
+       
+        foreach ($categories as $category_id){
+            $newData = array(
+                'category_id' => $category_id,
+                'post_id' => $postId,
+            );
+            $insert->values($newData);
+            $selectString = $sql->getSqlStringForSqlObject($insert);
+            $dbAdapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
+        }
     }
 
     /**
@@ -99,18 +122,33 @@ class Posts extends DemoapplicationAbstractModel {
      */
     public function update($data, $postId) {
         
-        $sql = new Sql($this->getDBAdapter());
+        $dbAdapter = $this->getDBAdapter();
+        $sql = new Sql($dbAdapter);
 
         $updateData = array();
         $updateData['post_title'] = $data['postTitle'];
-        $updateData['category_id'] = $data['category'];
         $updateData['summary'] = $data['summary'];
         $update = $sql->update('posts')->set($updateData)->where(array('id' => $postId));
         
         $selectString = $sql->getSqlStringForSqlObject($update);
-        $results = $this->dbAdapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
-        
+        $results = $dbAdapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
+        $this->deleteCategoryPost($postId);
+        $this->createRelationship($postId,$data['category']);
         return $results;
+    }
+    /**
+     * 
+     * @param type $postId
+     */
+    public function deleteCategoryPost($postId){
+        $dbAdapter = $this->getDBAdapter();
+        $sql = new Sql($dbAdapter);
+        $delete = $sql->delete('category_post')->where(array('post_id' => $postId));
+        $selectString = $sql->getSqlStringForSqlObject($delete);
+        $results = $dbAdapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
+        //$sql = 'delete FROM category_post where post_id = ' . $postId;
+
+        //$result = $dbAdapter->query($sql)->execute();
     }
 
 }
